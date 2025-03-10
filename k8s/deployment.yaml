@@ -4,17 +4,69 @@ metadata:
   name: sample-app
   namespace: default
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: sample
+      app: sample-app
   template:
     metadata:
       labels:
-        app: sample
+        app: sample-app
     spec:
       containers:
-      - name: sample
-        image: nginx
+      - name: sample-app
+        image: nginx:latest  # Nginx 컨테이너 사용
         ports:
         - containerPort: 80
+        volumeMounts:
+        - name: html-volume
+          mountPath: /usr/share/nginx/html
+      volumes:
+      - name: html-volume
+        configMap:
+          name: sample-app-html
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sample-app-html
+  namespace: default
+data:
+  index.html: |
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>ArgoCD Auto Deployment</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                text-align: center;
+                margin: 50px;
+            }
+            h1 {
+                color: green;
+            }
+        </style>
+    </head>
+    <body>
+        <h1>🎉 ArgoCD 자동 배포 성공! 🎉</h1>
+        <p>이 페이지가 보인다면, 자동 배포가 정상적으로 동작하고 있는 것입니다.</p>
+        <p>현재 버전: <strong>v1</strong></p>
+    </body>
+    </html>
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sample-app
+  namespace: default
+spec:
+  selector:
+    app: sample-app
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80
+  type: NodePort
